@@ -18,21 +18,25 @@ st.markdown("""
     <style>
     .message-bubble {
         padding: 1rem;
-        margin-bottom: 1rem;
+        margin: 0.5rem 0;
         border-radius: 1rem;
-        background-color: #1a1a1a;
-        color: white;
+        max-width: 80%;
+        word-wrap: break-word;
+        display: inline-block;
     }
     .user {
         background-color: #3a3a3a;
-        text-align: right;
+        color: white;
+        align-self: flex-end;
     }
     .bot {
         background-color: #2b2b2b;
-        text-align: left;
+        color: white;
+        align-self: flex-start;
     }
-    .stTextArea textarea {
-        font-size: 1rem !important;
+    .chat-container {
+        display: flex;
+        flex-direction: column;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -45,10 +49,7 @@ if "chat_history" not in st.session_state:
 user_input = st.chat_input("Schreib mir etwas...")
 
 if user_input:
-    # Speichere Nutzer-Nachricht
     st.session_state.chat_history.append({"role": "user", "content": user_input})
-
-    # Anfrage an OpenAI
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=st.session_state.chat_history
@@ -56,8 +57,9 @@ if user_input:
     bot_message = response.choices[0].message.content
     st.session_state.chat_history.append({"role": "assistant", "content": bot_message})
 
-# Anzeige der Konversation
-for msg in reversed(st.session_state.chat_history):
-    with st.container():
-        role_class = "user" if msg["role"] == "user" else "bot"
-        st.markdown(f'<div class="message-bubble {role_class}">{msg["content"]}</div>', unsafe_allow_html=True)
+# Show chat history (chronological order)
+st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+for msg in st.session_state.chat_history:
+    role_class = "user" if msg["role"] == "user" else "bot"
+    st.markdown(f'<div class="message-bubble {role_class}">{msg["content"]}</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
