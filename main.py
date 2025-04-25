@@ -6,18 +6,58 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-st.set_page_config(page_title="Dein KI-Assistent", page_icon="🤖")
-st.title("👤 Personal AI Assistant")
+# Initial page config
+st.set_page_config(
+    page_title="🧠 Dein KI-Assistant",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-user_input = st.text_area("Frag mich etwas:")
+st.markdown("""
+    <style>
+    .message-bubble {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 1rem;
+        background-color: #1a1a1a;
+        color: white;
+    }
+    .user {
+        background-color: #3a3a3a;
+        text-align: right;
+    }
+    .bot {
+        background-color: #2b2b2b;
+        text-align: left;
+    }
+    .stTextArea textarea {
+        font-size: 1rem !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-if st.button("Antwort generieren"):
-    if user_input:
-        response = client.chat.completions.create(
-            model="gpt-4o",  # Du kannst auch gpt-3.5-turbo oder gpt-4 verwenden
-            messages=[{"role": "user", "content": user_input}]
-        )
-        st.markdown("### ✨ Antwort:")
-        st.write(response.choices[0].message.content)
-    else:
-        st.warning("Bitte gib eine Frage ein.")
+st.title("🤖 Personal AI Assistant")
+
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
+user_input = st.chat_input("Schreib mir etwas...")
+
+if user_input:
+    # Speichere Nutzer-Nachricht
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
+
+    # Anfrage an OpenAI
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=st.session_state.chat_history
+    )
+    bot_message = response.choices[0].message.content
+    st.session_state.chat_history.append({"role": "assistant", "content": bot_message})
+
+# Anzeige der Konversation
+for msg in reversed(st.session_state.chat_history):
+    with st.container():
+        role_class = "user" if msg["role"] == "user" else "bot"
+        st.markdown(f'<div class="message-bubble {role_class}">{msg["content"]}</div>', unsafe_allow_html=True)
